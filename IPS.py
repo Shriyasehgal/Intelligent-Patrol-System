@@ -287,26 +287,20 @@ def distance_check_window():
 def getCentroid(x_point, y_point):
     global combined_centroid_array
     combined_centroid_array = np.dstack([xcoords, ycoords])[0]
-    #print ("Combined centroid array")
-    #print (combined_centroid_array)
     mytree = scipy.spatial.cKDTree(combined_centroid_array)
     dist, indexes = mytree.query((x_point, y_point))
-
-    #print(combined_centroid_array)
-	#result.round(4)
-    #print ("dist ", dist)
-    #print ("indexes ", indexes)
-    #print ("Coordinates of centroid are: ", combined_centroid_array[indexes])
     objectid = result.query("xcoord == {} and ycoord == {}".format(combined_centroid_array[indexes][0], combined_centroid_array[indexes][1]))['OBJECTIDAS'].values
-    #print ("Object id", objectid[0])
-    #print('centrois test',combined_centroid_array[indexes], objectid[0])
     return combined_centroid_array[indexes], objectid[0]
+
+
 
 #Function to get 8 neighbours of a point
 def get8Neighbours(x, y):
     neighbours = np.array((getCentroid(x-1010, y)[0], getCentroid(x-1010, y+1010)[0], getCentroid(x, y+1010)[0], getCentroid(x+1010, y+1010)[0], getCentroid(x+1010, y)[0], getCentroid(x+1010, y-1010)[0], getCentroid(x, y-1010)[0], getCentroid(x-1010, y-1010)[0]))
     neighbours_id = np.array((getCentroid(x-1010, y)[1], getCentroid(x-1010, y+1010)[1], getCentroid(x, y+1010)[1], getCentroid(x+1010, y+1010)[1], getCentroid(x+1010, y)[1], getCentroid(x+1010, y-1010)[1], getCentroid(x, y-1010)[1], getCentroid(x-1010, y-1010)[1]))
     return neighbours,neighbours_id
+
+
 
 #plotting the points clicked on the map
 def plotpoint():
@@ -317,19 +311,11 @@ def plotpoint():
     	y = [i[1] for i in shape.shape.points[:]]
     	plot.plot(x,y,color="red", marker="o", linestyle="")
     canvas.draw()
-	#arr = []
     ans = getCentroid(x[0], y[0])[1]
 
-    #print(x)
-    #print(ans)
     topv = top_var.get()
     #arr.append(ans)
     if topv == 1 and v == 1:
-
-        #global entry_1
-        #global label_2
-        #global entry_2
-        #print('Consider-different')
         if num_points == 1:
             arr_expo = []
             s = ans
@@ -378,11 +364,6 @@ def plotpoint():
 
 
     if topv == 1 and v == 2:
-        #global entry_1
-        #global label_2
-        #global entry_2
-        #entry_1.destroy()
-        #print('Consider-same')
         if num_points == 1:
             arr_expo = []
 
@@ -412,12 +393,6 @@ def plotpoint():
             s=ans
             entry_1 = Label(window,text=ans, bg = '#00CED1')
             entry_1.place(x=1255,y=217)
-        #    try:
-        #        entry_2
-        #        entry_2.destroy()
-            #except UnboundLocalError:
-            #     print ("x doesn't exist")
-            #get8Neighbours(x[0],y[0])
         else:
             d=ans
             entry_2 = Label(window,text=ans, bg = '#00CED1')
@@ -457,76 +432,7 @@ def plotpoint():
         #sget8Neighbours(x[0],y[0])
 
 
-#Don't the coordinates of the path
-def pathCoordinates(s,d):
-    global pathcounter, topv, path
-    #print(s,d)
-    path=[]
-    pathcoord=[]
-    #print('pathcounter', pathcounter)
-    destination= result.loc[result['OBJECTIDAS']==d,'xcoord':'ycoord'].values
-    source= result.loc[result['OBJECTIDAS']==s,'xcoord':'ycoord'].values
-    current = s
-    #if v==2:
-    #    pathcounter=pathcounter/2
-    #print("pathcounter", pathcounter)
-    remaining_dist = int(((math.sqrt((destination[0][0] - source[0][0])**2 + (destination[0][1] - source[0][1])**2)))/1010)
-    excess=pathcounter-remaining_dist
-    while(excess>1):
-        #print("hello")
-        current_dist=[]
-        closest_grid=[]
-        path.append(current)
-        current_coord= result.loc[result['OBJECTIDAS']==current,'xcoord':'ycoord'].values
-        pathcoord.append(current_coord)
-        neighbours= get8Neighbours(current_coord[0][0],current_coord[0][1])[1]
-        for i in range(8):
-            current_dist.append(result.loc[result['OBJECTIDAS']==neighbours[i],'xcoord':'ycoord'].values)
-        current_dist = np.array(current_dist)
-        current_dist=current_dist.reshape((8,2))
-        #print(current_dist)
-        for i in range(5):
-            mytree2 = scipy.spatial.cKDTree(current_dist)
-            dist, indexes = mytree2.query((destination[0][0],destination[0][1]))
-            objectid = result.query("xcoord == {} and ycoord == {}".format(current_dist[indexes][0], current_dist[indexes][1]))['OBJECTIDAS'].values
-
-            current_dist[indexes][0]=math.inf
-            current_dist[indexes][1]=math.inf
-            closest_grid.append(objectid)
-        closest_grid = np.array(closest_grid).reshape(5,)
-        #print("Closest Grid ,", closest_grid)
-                #result['criticality'] = ['1' if result['OBJECTID'] == current]
-
-
-        closest_values = result.loc[result['OBJECTIDAS'].isin(closest_grid)].values
-        #print(closest_values)
-        current_index=np.argmax([_[result.columns.get_loc("criticality")] for _ in closest_values])
-
-        current=closest_values[current_index][result.columns.get_loc("OBJECTIDAS")]
-
-        base = np.random.uniform(low=0.6, high=0.9, size=1)
-        score=result.loc[result['OBJECTIDAS']==current,'criticality']
-        #print(base)
-        if current not in path and result.loc[result['OBJECTIDAS']==current,'criticality'].item()>0:
-            result.loc[result['OBJECTIDAS']==current,'criticality']=math.log(score,base) if math.log(score,base)>=-15 else -15
-        elif current not in path and result.loc[result['OBJECTIDAS']==current,'criticality'].item()==0:
-            result.loc[result['OBJECTIDAS']==current,'criticality']-=3
-
-            #print("hello")
-        #print(result.loc[result['OBJECTID']==current,'criticality'])
-        #print(current)
-        if(current==d):
-            continue
-        #print(current)
-        pathcounter=pathcounter-1
-
-        remaining_dist = int(((math.sqrt((destination[0][0] - closest_values[current_index][-4])**2 + (destination[0][1] - closest_values[current_index][-3])**2)))/1010)
-        excess=pathcounter-remaining_dist
-        #print(pathcounter,remaining_dist,excess)
-        #sget8Neighbours(x[0],y[0])'''
-
-
-#Don't the coordinates of the path
+#Return the coordinates of the path
 def pathCoordinates(s,d):
     global pathcounter, topv, path
     #print(s,d)
@@ -765,38 +671,6 @@ def sameSource(s):
 
 
 #Function to compute cost of all grids
-'''def computeCost():
-	#print (result)
-	extra =[0]
-	cost = np.zeros([len(result), 1])
-	for i, row in result.iterrows():
-		#print ((row['water1']))
-		cost[i] = (row['WATER'] * col_score['WATER']) + (row['FOREST'] * col_score['FOREST'])
-		if (row['ROADWAYS'] == 1):
-			extra.append(col_score['ROADWAYS'])
-			cost[i] += col_score['ROADWAYS']
-			continue
-		if (row['RAILWAYS'] == 1):
-			extra.append(col_score['RAILWAYS'])
-			cost[i] += col_score['RAILWAYS']
-			continue
-		neighbours = get8Neighbours(row['xcoord'], row['ycoord'])[0]
-		#print (neighbours)
-		for k in range(8):
-			new_neighbours = get8Neighbours(neighbours[k][0], neighbours[k][1])[0]
-			for j in range(8):
-				if ((any(result.query("xcoord == {} and ycoord == {}".format(new_neighbours[j][0], new_neighbours[j][1]))['ROADWAYS'].values)) == 1):
-					extra.append(col_score['ROADWAYS'] - 0.5)
-				if ((any(result.query("xcoord == {} and ycoord == {}".format(new_neighbours[j][0], new_neighbours[j][1]))['RAILWAYS'].values)) == 1):
-					extra.append(col_score['RAILWAYS'] - 0.5)
-			if ((any(result.query("xcoord == {} and ycoord == {}".format(neighbours[k][0], neighbours[k][1]))['ROADWAYS'].values)) == 1):
-					extra.append(col_score['ROADWAYS'] - 0.25)
-			if ((any(result.query("xcoord == {} and ycoord == {}".format(neighbours[k][0], neighbours[k][1]))['RAILWAYS'].values)) == 1):
-					extra.append(col_score['RAILWAYS'] - 0.25)
-		cost[i] += max(extra)
-
-	return cost'''
-
 def computeCost():
 
 	cost = [0] * len(result)
